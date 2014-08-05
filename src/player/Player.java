@@ -12,9 +12,9 @@ public class Player {
 	
 	private PlayerIcon playerIcon;
 
-	public Player(int frameW, int frameH) {
+	public Player() {
 		ship = new DefaultShip();
-		playerIcon = new PlayerIcon(ship, frameW, frameH);
+		playerIcon = new PlayerIcon(ship);
 	}
 	
 	public void strafeLeft() {

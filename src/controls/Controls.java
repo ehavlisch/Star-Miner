@@ -1,5 +1,6 @@
 package controls;
 
+import java.awt.event.KeyEvent;
 import java.io.Serializable;
 
 import javax.swing.KeyStroke;
@@ -45,7 +46,7 @@ public class Controls implements Serializable {
 		strafeLeft2 = null;
 		stabilize = KeyStroke.getKeyStroke('f');
 		stabilize2 = null;
-		openOptions = KeyStroke.getKeyStroke(' ');
+		openOptions = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 		openOptions2 = null;
 	}
 

@@ -1,6 +1,6 @@
 package entities;
 
-import main.Constants;
+import config.GlobalConfig;
 import map.Entity;
 
 public class DefaultSun extends Entity {
@@ -10,6 +10,6 @@ public class DefaultSun extends Entity {
 		
 		gravityWell = true;
 		gravityWellRadius = 1000;
-		gravityWellStrength = .01 / Constants.updatesPerSecond;
+		gravityWellStrength = .01 / GlobalConfig.updatesPerSecond;
 	}
 }

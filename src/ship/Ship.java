@@ -2,10 +2,11 @@ package ship;
 
 import java.util.List;
 
+import config.GlobalConfig;
 import map.Entity;
-
+import map.Map;
 import physics.Vector;
-
+import util.CollisionBox;
 import engines.Engine;
 
 public class Ship {
@@ -39,6 +40,15 @@ public class Ship {
 	protected double mass;
 	
 	protected String iconSrc;
+	
+	protected int shield;
+	protected int maxShield;
+	
+	protected int health;
+	protected int maxHealth;
+	
+	protected double fuel;
+	protected int maxFuel;
 
 	public Engine getEngine() {
 		return engine;
@@ -91,13 +101,25 @@ public class Ship {
 		}
 		//System.out.println("X: " + xPos + " Y: " + yPos + " Heading: " + Math.toDegrees(heading) + ".");
 	}
+	
+	private double mass() {
+		return mass + engine.getMass();
+	}
 
-	public void move(int updatesPerSecond) {
+	public void move(List<Entity> entities, Map map) {
 		synchronized (actionLock) {
+			if(accelerated) fuel -= engine.getEfficiency();
 			accelerated = false;
+			
+			if(decelerated) fuel -= engine.getEfficiency();
 			decelerated = false;
+			
+			if(turnedLeft) fuel -= engine.getEfficiency();			
 			turnedLeft = false;
+			
+			if(turnedRight) fuel -= engine.getEfficiency();
 			turnedRight = false;
+			
 			strafeRighted=false;
 			strafeLefted=false;
 			stabilized=false;
@@ -105,9 +127,16 @@ public class Ship {
 			double xDis = 0.0;
 			double yDis = 0.0;
 			synchronized (velocityLock) {
-				xDis = velocity.getxMag() * updatesPerSecond;
-				yDis = velocity.getyMag() * updatesPerSecond;
+				xDis = velocity.getxMag() * GlobalConfig.updatesPerSecond;
+				yDis = velocity.getyMag() * GlobalConfig.updatesPerSecond;
 			}
+			
+			CollisionBox cb = new CollisionBox(xPos, yPos, xPos + xDis, yPos + yDis, velocity, this, map);
+			
+			if(cb.collision(entities)) {
+				System.out.println("Collision detected!");
+			}
+			
 			synchronized (positionLock) {
 				xPos += xDis;
 				yPos += yDis;
@@ -124,8 +153,8 @@ public class Ship {
 			if (!accelerated) {
 				accelerated = true;
 				synchronized (velocityLock) {
-					double xMag = Math.cos(heading) * engine.getMagnitude();
-					double yMag = Math.sin(heading) * engine.getMagnitude();
+					double xMag = Math.cos(heading) * (engine.getForce() / mass()) / GlobalConfig.updatesPerSecond;
+					double yMag = Math.sin(heading) * (engine.getForce() / mass()) / GlobalConfig.updatesPerSecond;
 
 					this.velocity = velocity.add(new Vector(xMag, yMag));
 				}
@@ -138,8 +167,8 @@ public class Ship {
 			if (!decelerated) {
 				decelerated = true;
 				synchronized (velocityLock) {
-					double xMag = -Math.cos(heading) * engine.getMagnitude();
-					double yMag = -Math.sin(heading) * engine.getMagnitude();
+					double xMag = -Math.cos(heading) * (engine.getForce() / mass()) / GlobalConfig.updatesPerSecond;
+					double yMag = -Math.sin(heading) * (engine.getForce() / mass()) / GlobalConfig.updatesPerSecond;
 
 					this.velocity = velocity.add(new Vector(xMag, yMag));
 				}
@@ -152,8 +181,8 @@ public class Ship {
 			if(!strafeLefted) {
 				strafeLefted = true;
 				synchronized (velocityLock) {
-					double xMag = -Math.cos(heading + Math.PI/2) * engine.getMagnitude()/2;
-					double yMag = -Math.sin(heading + Math.PI/2) * engine.getMagnitude()/2;
+					double xMag = -Math.cos(heading + Math.PI/2) * (engine.getForce() / mass())/ 2 / GlobalConfig.updatesPerSecond;
+					double yMag = -Math.sin(heading + Math.PI/2) * (engine.getForce() / mass())/ 2 / GlobalConfig.updatesPerSecond;
 
 					this.velocity = velocity.add(new Vector(xMag, yMag));
 				}
@@ -166,8 +195,8 @@ public class Ship {
 			if(!strafeRighted) {
 				strafeRighted = true;
 				synchronized (velocityLock) {
-					double xMag = -Math.cos(heading - Math.PI/2) * engine.getMagnitude()/2;
-					double yMag = -Math.sin(heading - Math.PI/2) * engine.getMagnitude()/2;
+					double xMag = -Math.cos(heading - Math.PI/2) * (engine.getForce() / mass())/ 2 / GlobalConfig.updatesPerSecond;
+					double yMag = -Math.sin(heading - Math.PI/2) * (engine.getForce() / mass())/ 2 / GlobalConfig.updatesPerSecond;
 
 					this.velocity = velocity.add(new Vector(xMag, yMag));
 				}
@@ -180,7 +209,7 @@ public class Ship {
 			if(!stabilized) {
 				stabilized = true;
 				synchronized (velocityLock) {
-					this.velocity.stabilize(engine.getStabilizer());
+					this.velocity.stabilize((engine.getStabilizer() / mass()) / GlobalConfig.updatesPerSecond);
 				}
 			}
 		}
@@ -226,12 +255,16 @@ public class Ship {
 		return yPos;
 	}
 
-	public boolean collision(Entity e, double playerX, double playerY, int updatesPerSecond, int frameW, int frameH, int mapWidth, int mapHeight) {
+	public boolean collision(Entity e, double playerX, double playerY, int mapWidth, int mapHeight) {
 		//TODO this fails if the entity icon is rotated and the width is no longer the diameter of the circle, should also be an int
 		double entityR = e.getRadius();
 		
-		int entityX = (int) (e.getLocalXPos(xPos, frameW, mapWidth) + entityR);
-		int entityY = (int) (e.getLocalYPos(yPos, frameH, mapHeight) + entityR);
+		// placeholders in depreciated method
+		int frameW = 0;
+		int frameH = 0;
+		
+		int entityX = (int) (e.getLocalXPos(xPos, mapWidth) + entityR);
+		int entityY = (int) (e.getLocalYPos(yPos, mapHeight) + entityR);
 		
 //		System.out.println("Player at: (" + frameW/2 + ", " + frameH/2 + ")");
 //		System.out.println("Entity at: (" + entityX + ", " + entityY + ")");
@@ -254,6 +287,7 @@ public class Ship {
 			}
 			return true;
 		} else if(dist <= range) {
+			System.out.println("Collision");
 			double collisionX = (entityX * entityR + frameW/2 * radius ) / (entityR + radius);
 			double collisionY = (entityY * entityR + frameH/2 * radius ) / (entityR + radius);
 			
@@ -309,4 +343,58 @@ public class Ship {
 		lastGoodX = xPos;
 		lastGoodY = yPos;
 	}
+
+	public int getRadius() {
+		return radius;
+	}
+
+	public int getShield() {
+		return shield;
+	}
+
+	public void setShield(int shield) {
+		this.shield = shield;
+	}
+
+	public int getMaxShield() {
+		return maxShield;
+	}
+
+	public void setMaxShield(int maxShield) {
+		this.maxShield = maxShield;
+	}
+
+	public int getHealth() {
+		return health;
+	}
+
+	public void setHealth(int health) {
+		this.health = health;
+	}
+
+	public int getMaxHealth() {
+		return maxHealth;
+	}
+
+	public void setMaxHealth(int maxHealth) {
+		this.maxHealth = maxHealth;
+	}
+
+	public double getFuel() {
+		return fuel;
+	}
+
+	public void setFuel(int fuel) {
+		this.fuel = fuel;
+	}
+
+	public int getMaxFuel() {
+		return maxFuel;
+	}
+
+	public void setMaxFuel(int maxFuel) {
+		this.maxFuel = maxFuel;
+	}
+	
+	
 }

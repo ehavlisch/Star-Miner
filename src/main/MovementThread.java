@@ -3,15 +3,14 @@ package main;
 import java.util.ArrayList;
 import java.util.List;
 
+import config.GlobalConfig;
 import player.Player;
+import ui.GamePanel;
 import util.EntityIcon;
-import util.GamePanel;
 import map.Entity;
 import map.Map;
 
 public class MovementThread extends Thread {
-	
-	private int updatesPerSecond;
 	private Player player;
 	private Map map;
 	private GamePanel gamePanel;
@@ -20,8 +19,7 @@ public class MovementThread extends Thread {
 	
 	private List<Entity> drawnIcons;
 	
-	public MovementThread(int updatesPerSecond, Player player, Map map, GamePanel gamePanel) {
-		this.updatesPerSecond = updatesPerSecond;
+	public MovementThread(Player player, Map map, GamePanel gamePanel) {
 		this.player = player;
 		this.map = map;
 		this.gamePanel = gamePanel;
@@ -30,7 +28,7 @@ public class MovementThread extends Thread {
 	
 	public void run() {
 		running = true;
-		long sleepTime = 1000 / updatesPerSecond;
+		long sleepTime = 1000 / GlobalConfig.updatesPerSecond;
 		while(running) {
 			
 			try {
@@ -40,29 +38,26 @@ public class MovementThread extends Thread {
 				/*
 				 * Draw Entities
 				 */
-				
 				double playerX = player.getShip().getxPos();
 				double playerY = player.getShip().getyPos();
-				List<Entity> visibleEntities = map.getVisible(playerX, playerY, gamePanel.getWidth(), gamePanel.getHeight());				
+				List<Entity> visibleEntities = map.getVisible(playerX, playerY);				
 				List<Entity> noLongerVisible = new ArrayList<Entity>();
 				
-				boolean collision = false;
+				//boolean collision = false;
 				
 				for(Entity e : drawnIcons) {
 					if(visibleEntities.contains(e)) {
 						visibleEntities.remove(e);
-						e.updatePosition(gamePanel.getWidth(), gamePanel.getHeight(), playerX, playerY, map.getWidth(), map.getHeight());
+						e.updatePosition(playerX, playerY, map.getWidth(), map.getHeight());
 
-						collision = player.getShip().collision(e, playerX, playerY, updatesPerSecond, gamePanel.getWidth(), gamePanel.getHeight(), map.getWidth(), map.getHeight()) || collision;
+						//collision = player.getShip().collision(e, playerX, playerY, gamePanel.getWidth(), gamePanel.getHeight(), map.getWidth(), map.getHeight()) || collision;
 					} else {
 						noLongerVisible.add(e);
 					}
 				}
-				if(!collision) {
-					player.getShip().setLastGood();
-				}
+				
 				for(Entity e : visibleEntities) {
-					EntityIcon eIcon = e.createIcon(playerX, playerY, gamePanel.getWidth(), gamePanel.getHeight(), map.getWidth(), map.getHeight());
+					EntityIcon eIcon = e.createIcon(playerX, playerY, map.getWidth(), map.getHeight());
 					gamePanel.add(eIcon);
 					drawnIcons.add(e);
 				}
@@ -74,10 +69,13 @@ public class MovementThread extends Thread {
 				/*
 				 * Player Movement
 				 */
-				player.getShip().move(updatesPerSecond);
+				player.getShip().move(drawnIcons, map);
+				
+				
 				player.getShip().checkPosition(map.getWidth(), map.getHeight());
 				player.getPlayerIcon().updateHeading(player.getShip().getHeading());
-				SharedLocks.movementThreadLock.unlock();		
+				SharedLocks.movementThreadLock.unlock();
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				running = false;

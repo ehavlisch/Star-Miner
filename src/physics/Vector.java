@@ -38,8 +38,17 @@ public class Vector {
 	}
 
 	public void stabilize(double magnitude) {
-		double xStab = -xMag / (Math.abs(xMag) + Math.abs(yMag)) * magnitude;
-		double yStab = -yMag / (Math.abs(xMag) + Math.abs(yMag)) * magnitude;
+		
+		double xStab = 0.0;
+		double yStab = 0.0;
+		
+		if(xMag != 0) {
+			xStab = -xMag / (Math.abs(xMag) + Math.abs(yMag)) * magnitude;
+		}
+		if(yMag != 0) {
+			yStab = -yMag / (Math.abs(xMag) + Math.abs(yMag)) * magnitude;
+		}
+		
 		if (Math.abs(xStab) > Math.abs(xMag)) {
 			xMag = 0.0;
 		} else {

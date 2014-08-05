@@ -1,4 +1,4 @@
-package util;
+package ui;
 
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
@@ -6,11 +6,10 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JPanel;
 
-import main.UI;
-
 import player.Player;
 
-
+import util.OpenPauseAction;
+import config.GlobalConfig;
 import controls.Controls;
 import controls.MoveBackAction;
 import controls.MoveForwardAction;
@@ -26,20 +25,19 @@ public class GamePanel extends JPanel implements KeyListener {
 	private Player player;
 	private int width;
 	private int height;
-	private UI ui;
+	private GameFrame gameFrame;
 	
-	public GamePanel(Controls controls, Player player, int width, int height, UI ui) {
+	public GamePanel(Controls controls, Player player, GameFrame gameFrame) {
 		addKeyListener(this);
 		setFocusable(true);
-		requestFocusInWindow(true);
-		this.ui = ui;
-		
+		//requestFocusInWindow(true);
+		this.gameFrame = gameFrame;
 		this.player = player;
 		mapActions();
 		mapKeys(controls);
 		
-		this.width = width;
-		this.height = height;
+		this.width = GlobalConfig.gamePanelWidth;
+		this.height = GlobalConfig.gamePanelHeight;
 	
 		this.setPreferredSize(new Dimension(width, height));
 		this.setSize(new Dimension(width, height));
@@ -53,7 +51,7 @@ public class GamePanel extends JPanel implements KeyListener {
 		this.getActionMap().put("strafeLeft", new StrafeLeftAction(player));
 		this.getActionMap().put("strafeRight", new StrafeRightAction(player));
 		this.getActionMap().put("stabilize", new StabilizeAction(player));
-		this.getActionMap().put("openOptions", new OpenOptionsAction(ui));
+		this.getActionMap().put("openOptions", new OpenPauseAction(gameFrame));
 	}
 	
 	public void mapKeys(Controls controls) {

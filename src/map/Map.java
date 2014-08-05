@@ -3,6 +3,8 @@ package map;
 import java.util.ArrayList;
 import java.util.List;
 
+import config.GlobalConfig;
+
 public abstract class Map {
 	protected int bDivX = 1000;
 	protected int bSizeX;
@@ -40,10 +42,13 @@ public abstract class Map {
 		return bucket;
 	}
 	
-	public List<Entity> getVisible(double d, double f, int frameWidth, int frameHeight) {
+	public List<Entity> getVisible(double d, double f) {
 
 		int rightTwo = 0;
 		int botTwo = 0;
+		
+		int frameWidth = GlobalConfig.gamePanelWidth;
+		int frameHeight = GlobalConfig.gamePanelHeight;
 		
 		ArrayList<EntityBucket> bucketList = new ArrayList<EntityBucket>();
 
@@ -135,7 +140,9 @@ public abstract class Map {
 		}
 		List<Entity> entities = new ArrayList<Entity>();
 		
-		entities.addAll(this.largeEntities.getEntities());
+		if(largeEntities != null && largeEntities.getEntities() != null) {
+			entities.addAll(this.largeEntities.getEntities());
+		}
 		
 		//TODO Don't add entities beyond the frame to the visible buckets to save a bit more memory
 		if(bucketList != null && bucketList.size() > 0) {
